@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Checklist</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Food Checklist</h1>
+    <h2>Add Food Item</h2>
+    <form id="addFoodForm">
+        <input type="text" id="foodName" placeholder="Food Name" required>
+        <input type="number" id="foodQuantity" placeholder="Quantity" required>
+        <button type="button" onclick="addFoodItem()">Add Food Item</button>
+    </form>
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Quantity</th>
+            <th>Receipt Uploaded</th>
+            <th>Actions</th>
+        </tr>
+        {% for food_item in food_items %}
+        <tr>
+            <td>{{ food_item.id }}</td>
+            <td>{{ food_item.name }}</td>
+            <td>{{ food_item.quantity }}</td>
+            <td>{% if food_item.receipt %} Yes {% else %} No {% endif %}</td>
+            <td>
+                <button onclick='editFoodItem({{ food_item.id }}, "{{ food_item.name }}", {{ food_item.quantity }})'>Edit</button>
+                <button onclick='deleteFoodItem({{ food_item.id }})'>Delete</button>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h2>Upload Receipt</h2>
+    <form id="uploadReceiptForm">
+        <input type="file" id="receiptFile" accept=".pdf">
+        <button type="button" onclick="uploadReceipt()">Upload Receipt</button>
+    </form>
+
+    <h2>Purchase History</h2>
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Purchase Date</th>
+            <th>Receipt</th>
+        </tr>
+        {% for purchase in purchase_history %}
+        <tr>
+            <td>{{ purchase.id }}</td>
+            <td>{{ purchase.purchase_date }}</td>
+            <td>
+                <button onclick='viewReceipt({{ purchase.id }})'>View Receipt</button>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <script>
+        async function addFoodItem() {
+            const name = document.getElementById('foodName').value;
+            const quantity = document.getElementById('foodQuantity').value;
+            const response = await fetch('/food_items/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name, quantity })
+            });
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Failed to add food item');
+            }
+        }
+
+        async function editFoodItem(id, name, quantity) {
+            const newName = prompt('Enter new name', name);
+            const newQuantity = prompt('Enter new quantity', quantity);
+            if (newName !== null && newQuantity !== null) {
+                const response = await fetch(`/food_items/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name: newName, quantity: parseInt(newQuantity) })
+                });
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Failed to update food item');
+                }
+            }
+        }
+
+        async function deleteFoodItem(id) {
+            const response = await fetch(`/food_items/${id}`, {
+                method: 'DELETE'
+            });
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Failed to delete food item');
+            }
+        }
+
+        async function uploadReceipt() {
+            const fileInput = document.getElementById('receiptFile');
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            const response = await fetch('/food_items/upload_receipt', {
+                method: 'POST',
+                body: formData
+            });
+            if (response.ok) {
+                alert('Receipt uploaded successfully');
+                location.reload();
+            } else {
+                alert('Failed to upload receipt');
+            }
+        }
+
+        function viewReceipt(id) {
+            window.open(`/purchase_history/${id}/receipt`);
+        }
+    </script>
+</body>
+</html>

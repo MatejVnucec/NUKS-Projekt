@@ -1,0 +1,6 @@
+Fastapi[all]==0.92.0
+Sqlalchemy==2.0.4
+fastapi_versioning==0.10.0
+pydantic
+uvicorn
+fastapi
